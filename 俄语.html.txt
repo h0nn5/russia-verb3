@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>俄语动词体对应关系学习工具</title>
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+        
+        .instructions {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px;
+            font-size: 1rem;
+            line-height: 1.8;
+            border-left: 5px solid #2196f3;
+        }
+        
+        .aspect-explanation {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin: 20px;
+        }
+        
+        .aspect-card {
+            flex: 1;
+            min-width: 300px;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .imperfective-card {
+            background: #e8f5e9;
+            border-left: 5px solid #2e7d32;
+        }
+        
+        .perfective-card {
+            background: #fff3e0;
+            border-left: 5px solid #ef6c00;
+        }
+        
+        .aspect-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .aspect-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        
+        .imperfective-badge {
+            background: #2e7d32;
+            color: white;
+        }
+        
+        .perfective-badge {
+            background: #ef6c00;
+            color: white;
+        }
+        
+        .controls {
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        input[type="text"]:focus {
+            border-color: #2196f3;
+            box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+            outline: none;
+        }
+        
+        .filter-options {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        select {
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            background: white;
+            cursor: pointer;
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            background: #2196f3;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn:hover {
+            background: #0d8bf2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-export {
+            background: #4caf50;
+        }
+        
+        .btn-export:hover {
+            background: #45a049;
+        }
+        
+        .table-container {
+            padding: 20px;
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        th {
+            background: #2196f3;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+        
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        tr:hover {
+            background: #f0f7ff;
+        }
+        
+        .verb-pair {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .verb-imperfective {
+            font-weight: 600;
+            color: #2e7d32;
+        }
+        
+        .verb-perfective {
+            font-weight: 600;
+            color: #ef6c00;
+        }
+        
+        .verb-translation {
+            color: #666;
+            font-style: italic;
+        }
+        
+        .example {
+            font-size: 0.9rem;
+            color: #555;
+            margin-top: 5px;
+            line-height: 1.5;
+        }
+        
+        .example-ru {
+            font-weight: 500;
+        }
+        
+        .example-cn {
+            color: #777;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 0.9rem;
+            border-top: 1px solid #e0e0e0;
+            background: #f8f9fa;
+        }
+        
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .search-box {
+                min-width: 100%;
+            }
+            
+            .filter-options {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            th, td {
+                padding: 10px;
+                font-size: 0.9rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .aspect-card {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>俄语动词体对应关系学习工具</h1>
+            <p class="subtitle">掌握俄语动词未完成体与完成体的对应关系</p>
+        </header>
+        
+        <div class="instructions">
+            <p><strong>使用说明：</strong> 此工具展示俄语动词未完成体与完成体的对应关系。使用搜索框查找特定动词，通过筛选选项按字母排序，点击"导出到Excel"按钮下载数据。</p>
+        </div>
+        
+        <div class="aspect-explanation">
+            <div class="aspect-card imperfective-card">
+                <div class="aspect-title">
+                    <span class="aspect-badge imperfective-badge">未完成体</span>
+                    Несовершенный вид
+                </div>
+                <p><strong>用法：</strong> 表示过程、重复、习惯或持续的动作</p>
+                <p><strong>回答问题：</strong> Что делать? (在做什么？/经常做什么？)</p>
+                <p><strong>时态：</strong> 现在时、过去时、将来时（表示持续或重复）</p>
+                <p><strong>例子：</strong> Я чита́ю кни́гу. (我正在读书。)</p>
+            </div>
+            
+            <div class="aspect-card perfective-card">
+                <div class="aspect-title">
+                    <span class="aspect-badge perfective-badge">完成体</span>
+                    Совершенный вид
+                </div>
+                <p><strong>用法：</strong> 表示动作的完成、结果或一次性的行为</p>
+                <p><strong>回答问题：</strong> Что сделать? (做完了什么？/要做什么？)</p>
+                <p><strong>时态：</strong> 过去时、将来时（没有现在时）</p>
+                <p><strong>例子：</strong> Я прочита́л кни́гу. (我读完了这本书。)</p>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="搜索俄语动词或中文意思...">
+            </div>
+            
+            <div class="filter-options">
+                <select id="sortOption">
+                    <option value="russian">按俄语排序</option>
+                    <option value="chinese">按中文排序</option>
+                </select>
+            </div>
+            
+            <button class="btn btn-export" id="exportBtn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                    <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                </svg>
+                导出到Excel
+            </button>
+        </div>
+        
+        <div class="table-container">
+            <table id="verbsTable">
+                <thead>
+                    <tr>
+                        <th>未完成体动词</th>
+                        <th>完成体动词</th>
+                        <th>中文意思</th>
+                        <th>说明</th>
+                        <th>例子</th>
+                    </tr>
+                </thead>
+                <tbody id="verbsTableBody">
+                    <!-- 动词数据将通过JavaScript填充 -->
+                </tbody>
+            </table>
+        </div>
+        
+        <footer>
+            <p>俄语动词体对应关系学习工具 &copy; 2023 | 数据仅供参考，学习时请以权威教材为准</p>
+        </footer>
+    </div>
+
+    <script>
+        // 动词体对应数据
+        const verbsAspectData = [
+            {
+                imperfective: "покупа́ть",
+                perfective: "купи́ть",
+                chinese: "买",
+                explanation: "强调'购买'这个行为本身（过程）与结果（买到）",
+                example: "Я покупа́ю хлеб. (我正在买面包。) / Я купи́л хлеб. (我买到了面包。)"
+            },
+            {
+                imperfective: "говори́ть",
+                perfective: "сказа́ть",
+                chinese: "说",
+                explanation: "говорить 指说话的过程或能力；сказать 指说出一句话或具体内容",
+                example: "Он говори́т по-ру́сски. (他会说俄语。) / Он сказа́л мне пра́вду. (他对我说了实话。)"
+            },
+            {
+                imperfective: "посыла́ть",
+                perfective: "посла́ть",
+                chinese: "寄，送",
+                explanation: "强调'发送'的过程与结果（已发出）",
+                example: "Я посыла́ю ему письмо́. (我正在给他寄信。) / Я посла́л ему письмо́. (我给他寄了信。)"
+            },
+            {
+                imperfective: "получа́ть",
+                perfective: "получи́ть",
+                chinese: "收到，获得",
+                explanation: "强调'接收'的过程与结果（已收到）",
+                example: "Я получа́ю мно́го писем. (我收到很多信。) / Я получи́л твоё письмо́. (我收到了你的信。)"
+            },
+            {
+                imperfective: "писа́ть",
+                perfective: "написа́ть",
+                chinese: "写",
+                explanation: "强调'书写'的过程与结果（写完）",
+                example: "Он пи́шет кни́гу. (他正在写一本书。) / Он написа́л кни́гу. (他写完了一本书。)"
+            },
+            {
+                imperfective: "чита́ть",
+                perfective: "прочита́ть",
+                chinese: "读",
+                explanation: "читать 指阅读行为；прочитать 指读完、通读",
+                example: "Я чита́ю га́зету. (我正在读报纸。) / Я прочита́л га́зету. (我读完了报纸。)"
+            },
+            {
+                imperfective: "подписывать",
+                perfective: "подписа́ть",
+                chinese: "签字",
+                explanation: "强调'签署'的过程与结果（签好）",
+                example: "Он подпи́сывает докуме́нт. (他正在签署文件。) / Он подписа́л докуме́нт. (他签署了文件。)"
+            },
+            {
+                imperfective: "звони́ть",
+                perfective: "позвони́ть",
+                chinese: "打电话",
+                explanation: "强调'打电话'的行为与结果（打通了一次）",
+                example: "Он ча́сто звони́т. (他经常打电话。) / Он позвони́л мне вчера́. (他昨天给我打了电话。)"
+            },
+            {
+                imperfective: "реша́ть",
+                perfective: "реши́ть",
+                chinese: "解决，决定",
+                explanation: "强调'解决/决定'的过程与结果（已解决/已决定）",
+                example: "Мы реша́ем пробле́му. (我们正在解决问题。) / Мы реши́ли пробле́му. (我们解决了问题。)"
+            },
+            {
+                imperfective: "зака́зывать",
+                perfective: "заказа́ть",
+                chinese: "预定，订购",
+                explanation: "强调'订购'的过程与结果（已下单）",
+                example: "Я зака́зываю столи́к. (我正在预订桌子。) / Я заказа́л столи́к. (我预订了桌子。)"
+            },
+            {
+                imperfective: "ви́деть",
+                perfective: "уви́деть",
+                chinese: "看见",
+                explanation: "видеть 指'看见'的状态或能力；увидеть 指'看到'这个动作的开始或结果",
+                example: "Я ви́жу его́. (我看见他了。) / Я уви́дел его́ вчера́. (我昨天看到他了。)"
+            },
+            {
+                imperfective: "смотре́ть",
+                perfective: "посмотре́ть",
+                chinese: "看",
+                explanation: "смотреть 指观看的过程；посмотреть 指看一会儿、看一看",
+                example: "Он смо́трит телеви́зор. (他正在看电视。) / Он посмотре́л фильм. (他看了一部电影。)"
+            },
+            {
+                imperfective: "плати́ть",
+                perfective: "заплати́ть",
+                chinese: "支付",
+                explanation: "强调'支付'的过程与结果（付清）",
+                example: "Я плачу́ за кварти́ру. (我正在付房租。) / Я заплати́л за кварти́ру. (我付了房租。)"
+            },
+            {
+                imperfective: "ду́мать",
+                perfective: "поду́мать",
+                chinese: "想，思考",
+                explanation: "думать 指思考的过程；подумать 指想一下、思考一番",
+                example: "Я ду́маю об э́том. (我正在思考这件事。) / Я поду́маю об э́том. (我会考虑一下这件事。)"
+            },
+            {
+                imperfective: "отменя́ть",
+                perfective: "отмени́ть",
+                chinese: "取消",
+                explanation: "强调'取消'的过程与结果（已取消）",
+                example: "Мы отменя́ем встре́чу. (我们正在取消会议。) / Мы отмени́ли встре́чу. (我们取消了会议。)"
+            },
+            {
+                imperfective: "де́лать",
+                perfective: "сде́лать",
+                chinese: "做",
+                explanation: "这是最常用的一对，强调'做'的过程与结果（做完）",
+                example: "Что ты де́лаешь? (你在做什么？) / Я сде́лал дома́шнюю рабо́ту. (我做完了家庭作业。)"
+            },
+            {
+                imperfective: "открыва́ть",
+                perfective: "откры́ть",
+                chinese: "打开",
+                explanation: "强调'打开'的过程与结果（打开）",
+                example: "Он открыва́ет окно́. (他正在开窗。) / Он откры́л окно́. (他打开了窗户。)"
+            },
+            {
+                imperfective: "закрыва́ть",
+                perfective: "закры́ть",
+                chinese: "关闭",
+                explanation: "强调'关闭'的过程与结果（关上）",
+                example: "Он закрыва́ет дверь. (他正在关门。) / Он закры́л дверь. (他关上了门。)"
+            },
+            {
+                imperfective: "забыва́ть",
+                perfective: "забы́ть",
+                chinese: "忘记",
+                explanation: "强调'忘记'的过程与结果（已忘记）",
+                example: "Я забыва́ю его́ и́мя. (我老是忘记他的名字。) / Я забы́л его́ и́мя. (我忘记了他的名字。)"
+            },
+            {
+                imperfective: "спра́шивать",
+                perfective: "спроси́ть",
+                chinese: "问",
+                explanation: "强调'询问'的过程与结果（问出问题）",
+                example: "Он спра́шивает меня́. (他正在问我。) / Он спроси́л меня́. (他问了我。)"
+            },
+            {
+                imperfective: "отвеча́ть",
+                perfective: "отве́тить",
+                chinese: "回答",
+                explanation: "强调'回答'的过程与结果（作出回答）",
+                example: "Я отвеча́ю на вопро́с. (我正在回答问题。) / Я отве́тил на вопро́с. (我回答了问题。)"
+            },
+            {
+                imperfective: "проси́ть",
+                perfective: "попроси́ть",
+                chinese: "请求",
+                explanation: "强调'请求'的过程与结果（提出请求）",
+                example: "Он про́сит помо́щи. (他正在请求帮助。) / Он попроси́л помо́щи. (他请求了帮助。)"
+            },
+            {
+                imperfective: "изуча́ть",
+                perfective: "вы́учить",
+                chinese: "学习",
+                explanation: "изучать 指学习过程；выучить 指学会、掌握",
+                example: "Я изуча́ю ру́сский язы́к. (我正在学习俄语。) / Я вы́учил но́вые слова́. (我学会了新单词。)"
+            },
+            {
+                imperfective: "брать",
+                perfective: "взять",
+                chinese: "拿，取",
+                explanation: "这是一对特殊变位的动词，强调'拿'的过程与结果（拿到）",
+                example: "Я беру́ кни́гу. (我正在拿书。) / Я взял кни́гу. (我拿了书。)"
+            },
+            {
+                imperfective: "дава́ть",
+                perfective: "дать",
+                chinese: "给",
+                explanation: "这是另一对特殊变位的动词，强调'给'的过程与结果（交给）",
+                example: "Я даю́ ему́ кни́гу. (我正在给他书。) / Я дал ему́ кни́гу. (我给了他书。)"
+            },
+            {
+                imperfective: "пить",
+                perfective: "вы́пить",
+                chinese: "喝",
+                explanation: "пить 指喝的过程；выпить 指喝完、喝掉",
+                example: "Я пью́ чай. (我正在喝茶。) / Я вы́пил чай. (我喝完了茶。)"
+            }
+        ];
+
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            // 渲染表格
+            renderTable();
+            
+            // 设置搜索功能
+            setupSearch();
+            
+            // 设置筛选功能
+            setupFilters();
+            
+            // 设置导出功能
+            setupExport();
+        });
+
+        // 渲染表格函数
+        function renderTable(data = verbsAspectData) {
+            const tableBody = document.getElementById('verbsTableBody');
+            tableBody.innerHTML = '';
+            
+            data.forEach(verb => {
+                const row = document.createElement('tr');
+                
+                row.innerHTML = `
+                    <td>
+                        <div class="verb-pair">
+                            <span class="verb-imperfective">${verb.imperfective}</span>
+                            <span class="verb-translation">${verb.chinese}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="verb-pair">
+                            <span class="verb-perfective">${verb.perfective}</span>
+                            <span class="verb-translation">${verb.chinese}</span>
+                        </div>
+                    </td>
+                    <td>${verb.chinese}</td>
+                    <td>${verb.explanation}</td>
+                    <td>
+                        <div class="example">
+                            <div class="example-ru">${verb.example.split(' / ')[0]}</div>
+                            <div class="example-cn">${verb.example.split(' / ')[1]}</div>
+                        </div>
+                    </td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+        }
+
+        // 设置搜索功能
+        function setupSearch() {
+            const searchInput = document.getElementById('searchInput');
+            
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                
+                // 筛选动词
+                const filteredData = verbsAspectData.filter(verb => 
+                    verb.imperfective.toLowerCase().includes(searchTerm) || 
+                    verb.perfective.toLowerCase().includes(searchTerm) ||
+                    verb.chinese.toLowerCase().includes(searchTerm) ||
+                    verb.explanation.toLowerCase().includes(searchTerm)
+                );
+                
+                // 重新渲染表格
+                renderTable(filteredData);
+            });
+        }
+
+        // 设置筛选功能
+        function setupFilters() {
+            const sortOption = document.getElementById('sortOption');
+            
+            // 筛选和排序函数
+            function applySort() {
+                const sortBy = sortOption.value;
+                
+                // 排序数据
+                let sortedData = [...verbsAspectData];
+                
+                if (sortBy === 'russian') {
+                    sortedData.sort((a, b) => a.imperfective.localeCompare(b.imperfective));
+                } else if (sortBy === 'chinese') {
+                    sortedData.sort((a, b) => a.chinese.localeCompare(b.chinese));
+                }
+                
+                // 应用排序
+                renderTable(sortedData);
+            }
+            
+            // 添加事件监听器
+            sortOption.addEventListener('change', applySort);
+        }
+
+        // 设置导出功能
+        function setupExport() {
+            const exportBtn = document.getElementById('exportBtn');
+            
+            exportBtn.addEventListener('click', function() {
+                // 创建工作簿
+                const wb = XLSX.utils.book_new();
+                
+                // 准备导出数据
+                const exportData = verbsAspectData.map(verb => ({
+                    "未完成体动词": verb.imperfective,
+                    "完成体动词": verb.perfective,
+                    "中文意思": verb.chinese,
+                    "说明": verb.explanation,
+                    "例子": verb.example
+                }));
+                
+                // 创建工作表
+                const ws = XLSX.utils.json_to_sheet(exportData);
+                
+                // 添加工作表到工作簿
+                XLSX.utils.book_append_sheet(wb, ws, "俄语动词体对应表");
+                
+                // 导出Excel文件
+                XLSX.writeFile(wb, "俄语动词体对应表.xlsx");
+            });
+        }
+    </script>
+</body>
+</html>
